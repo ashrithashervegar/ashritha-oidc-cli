@@ -1,26 +1,69 @@
-name: JFrog CLI Ping Test
-
+name: oidc-poc
 on:
-  workflow_dispatch:  # Allows you to trigger this workflow manually
-
+    push:
+        branches:
+            - '*'
 jobs:
-  jfrog-ping:
-    runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write    # Required for OIDC
-      contents: read     # Required for actions/checkout (if used)
-
-    steps:
-      - name: Set up JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v3
-        env:
-          JF_URL: https://hts2.jfrog.io/
-
-      - name: Configure JFrog CLI with OIDC
-        run: |
-          jf c add hts2-server --url=https://hts2.jfrog.io/ --oidc
-
-      - name: Ping Artifactory
-        run: |
-          jf rt ping
+    auth:
+        permissions:
+            contents: read
+            id-token: write
+        runs-on: ubuntu-latest
+        steps:
+            - name: Get id token
+              run: |
+                    ID_TOKEN=$(curl -sLS -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+                    "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=jfrog-github" | jq .value | tr -d '"')
+                    echo "ID_TOKEN=${ID_TOKEN}" >> $GITHUB_ENV
+            
+            - name: Exchange token with access
+              env:
+                    ID_TOKEN: ${{env.ID_TOKEN}}
+                    JFROG_PLATFORM_URL: https://hts2.jfrog.io
+              run: |
+                    ACCESS_TOKEN=$(curl -XPOST -H "Content-Type: application/json" "https://hts2.jfrog.io/access/api/v1/oidc/token" -d "{\"grant_type\": \"urn:ietf:params:oauth:grant-type:token-exchange\", \"subject_token_type\":\"urn:ietf:params:oauth:token-type:id_token\", \"subject_token\": \"${ID_TOKEN}\", \"provider_name\": \"ashritha\"}" | jq .access_token | tr -d '"')
+                    echo "ACCESS_TOKEN=${ACCESS_TOKEN}" >> $GITHUB_ENV
+            
+            - name: List token
+              env:
+                    OIDC_AUDIENCE: "jfrog-github"
+                    OIDC_PROVIDER: "ashritha"
+                    ACCESS_TOKEN: ${{ env.ACCESS_TOKEN }}
+              run: |
+                     RESPONSE=$(curl -s -o response.json -w "%{http_code}" -X POST -H "Content-type: application/json" https://hts2.jfrog.io/access/api/v1/oidc/token -d \ "{\"grant_type\": \"urn:ietf:params:oauth:grant-type:token-exchange\",\"subject_token_type\":\"urn:ietf:params:oauth:token-type:id_token\",\"subject_token\": \"${{ env.ID_TOKEN }}\",\"provider_name\": \"${{ env.OIDC_PROVIDER }}\"}")
+                     echo "API Response:"
+                     echo "$RESPONSE"
+            
+            # Create a .txt file locally
+            - name: Create .txt file
+              run: |
+                echo "This is a dynamically created text file with some content" > my-file.txt
+            # Upload .txt file to JFrog Artifactory using curl
+            - name: Upload .txt file to JFrog Artifactory using curl
+              env:
+                JFROG_URL: https://hts2.jfrog.io
+                ACCESS_TOKEN: ${{ env.ACCESS_TOKEN }}
+              run: |
+                # Define file path and repository details
+                FILE_PATH="my-file.txt"
+                REPO="ashrithatest-npm-local"
+                TARGET_PATH="my-file.txt"  # The path where the file will be stored in Artifactory (can be a folder inside the repo)
+                # Upload the file using curl
+                curl -X PUT "$JFROG_URL/artifactory/$REPO/$TARGET_PATH" \
+                  -H "Authorization: Bearer $ACCESS_TOKEN" \
+                  -H "Content-Type: application/octet-stream" \
+                  --data-binary @"$FILE_PATH"
+            # Download the uploaded file from JFrog Artifactory using curl
+            - name: Download uploaded .txt file from JFrog Artifactory using curl
+              env:
+                ACCESS_TOKEN: ${{ env.ACCESS_TOKEN }}
+                JFROG_URL: https://hts2.jfrog.io
+              run: |
+                # Define repository and file path to be downloaded
+                REPO="ashrithatest-npm-local"
+                FILE_PATH="my-file.txt"  # The file to download
+                LOCAL_FILE_PATH="downloaded-my-file.txt"  # Path to save the downloaded file locally
+                # Use curl to download the file
+                curl -H "Authorization: Bearer ${ACCESS_TOKEN}" -X GET "$JFROG_URL/artifactory/$REPO/$FILE_PATH" -o "$LOCAL_FILE_PATH" -vvv
+                # Verify the downloaded file
+                ls -l "$LOCAL_FILE_PATH"
