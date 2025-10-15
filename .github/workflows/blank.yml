@@ -18,7 +18,8 @@ jobs:
               env:
                 JF_URL: https://hts2.jfrog.io
               with:
-               oidc-provider-name: ashritha-cli 
+               oidc-provider-name: ashritha-cli
+               oidc-audience: ashritha-cli-Audience
               
     #           run: |
     #                 ID_TOKEN=$(curl -sLS -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
