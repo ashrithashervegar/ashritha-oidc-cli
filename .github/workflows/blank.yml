@@ -1,0 +1,5 @@
+- uses: jfrog/setup-jfrog-cli@v4
+    env:
+        JF_URL: https://hts2.jfrog.io 
+    with:
+        oidc-provider-name: ashritha-cli 
