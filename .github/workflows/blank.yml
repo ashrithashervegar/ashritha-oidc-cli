@@ -1,53 +1,25 @@
-
 name: oidc-poc
 
 on:
-    push:
-        branches:
-            - '*'
+  push:
+    branches:
+      - '*'
 
 jobs:
-    auth:
-        permissions:
-            contents: read
-            id-token: write
-        runs-on: ubuntu-latest
-        steps:
-            - name: Get id token
-              uses: jfrog/setup-jfrog-cli@v4
-              env:
-                JF_URL: https://hts2.jfrog.io
-              with:
-               oidc-provider-name: ashritha-cli
-               oidc-audience: ashritha-cli-Audience
-              
-    #           run: |
-    #                 ID_TOKEN=$(curl -sLS -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-    #                 "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=jfrog-github" | jq .value | tr -d '"')
-    #                 echo "ID_TOKEN=${ID_TOKEN}" >> $GITHUB_ENV
-    #                 echo "$ID_TOKEN"
+  auth:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up JFrog CLI with OIDC
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          oidc-provider-name: ashritha-cli
+          oidc-audience: ashritha-cli-Audience
+        env:
+          JF_URL: https://hts2.jfrog.io
 
-
-
-    #                 - uses: jfrog/setup-jfrog-cli@v4
-    # env:
-    #     JF_URL: https://hts2.jfrog.io 
-    # with:
-    #     oidc-provider-name: ashritha-cli 
-        
-
-    #         - name: Install JFrog CLI
-    #           run: |
-    #                 curl -fL https://getcli.jfrog.io | sh
-    #                 sudo mv jfrog /usr/local/bin/
-    #         - name: Configure JFrog CLI with OIDC Token
-    #           env:
-    #              ID_TOKEN: ${{ env.ID_TOKEN }}
-    #           run: |
-    #                 # Set the Artifactory URL and use OIDC token for authentication
-    #                 jfrog config add my-artifactory --url https://hts2.jfrog.io/artifactory --access-token $ID_TOKEN
-    #                 jfrog config show
-    #         - name: Ping Artifactory API with JFrog CLI (jf rt ping)
-    #           run: |
-    #                 echo "Pinging Artifactory using JFrog CLI..."
-    #                 jfrog rt ping --url https://hts2.jfrog.io/artifactory
+      - name: Ping Artifactory
+        run: |
+          jf rt ping
