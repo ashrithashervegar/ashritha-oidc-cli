@@ -18,7 +18,7 @@ jobs:
           oidc-provider-name: ashritha-cli
           oidc-audience: ashritha-cli-Audience
         env:
-          JF_URL: https://hts2.jfrog.io
+          JF_URL: http://34.93.235.229/
 
       - name: Ping Artifactory
         run: |
