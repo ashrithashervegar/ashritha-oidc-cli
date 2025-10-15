@@ -1,26 +1,24 @@
-name: JFrog CLI Ping Test
-
+name: oidc-cli-ping
 on:
-  workflow_dispatch:  # Allows you to trigger this workflow manually
+  workflow_dispatch:
 
 jobs:
-  jfrog-ping:
+  ping-artifactory:
     runs-on: ubuntu-latest
-
     permissions:
-      id-token: write    # Required for OIDC
-      contents: read     # Required for actions/checkout (if used)
+      id-token: write
+      contents: read
 
     steps:
       - name: Set up JFrog CLI
         uses: jfrog/setup-jfrog-cli@v3
         env:
-          JF_URL: https://hts2.jfrog.io/
+          JF_URL: https://hts2.jfrog.io
 
       - name: Configure JFrog CLI with OIDC
         run: |
-          jf c add hts2-server --url=https://hts2.jfrog.io/ --oidc
+          jf c add rt-server --url=https://hts2.jfrog.io --oidc
 
-      - name: Ping Artifactory
+      - name: Ping Artifactory using CLI
         run: |
           jf rt ping
