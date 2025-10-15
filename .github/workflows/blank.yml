@@ -24,4 +24,3 @@ jobs:
       - name: Ping Artifactory
         run: |
           jf rt ping
-
