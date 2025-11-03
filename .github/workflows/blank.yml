@@ -18,8 +18,17 @@ jobs:
           oidc-provider-name: ashritha-cli
           oidc-audience: ashritha-cli-Audience
         env:
-          JF_URL: http://34.93.235.229/
+          JF_URL: https://hts2.jfrog.io/artifactory/
 
       - name: Ping Artifactory
         run: |
           jf rt ping
+
+      - name: Create dummy file
+        run: |
+          echo "This is a dummy file for testing upload" > dummy-file.txt
+          cat dummy-file.txt
+
+      - name: Upload dummy file to Artifactory
+        run: |
+          jf rt upload "dummy-file.txt" "329133-npm-local/dummy-file.txt"
