@@ -9,30 +9,17 @@ jobs:
   auth:
     permissions:
       contents: read
-      id-token: write   # Required for GitHub OIDC
+      id-token: write
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Set up JFrog CLI with OIDC
         uses: jfrog/setup-jfrog-cli@v4
         with:
-          oidc-provider-name: ashritha-cli       # Must match Artifactory OIDC config
-          oidc-audience: ashritha-cli-Audience   # Must match Artifactory OIDC config
+          oidc-provider-name: ashritha-cli
+          oidc-audience: ashritha-cli-Audience
         env:
-          JF_URL: https://hts2.jfrog.io/artifactory/
-          JFROG_CLI_AVOID_NEW_VERSION_WARNING: "TRUE"
+          JF_URL: https://hts2.jfrog.io
 
       - name: Ping Artifactory
         run: |
           jf rt ping
-
-      - name: Create dummy file
-        run: |
-          echo "This is a dummy file for testing upload" > dummy-file.txt
-          cat dummy-file.txt
-
-      - name: Upload dummy file to Artifactory
-        run: |
-          jf rt upload "dummy-file.txt" "329133-npm-local/dummy-file.txt"
