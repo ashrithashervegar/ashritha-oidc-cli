@@ -9,16 +9,20 @@ jobs:
   auth:
     permissions:
       contents: read
-      id-token: write
+      id-token: write   # Required for GitHub OIDC
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Set up JFrog CLI with OIDC
         uses: jfrog/setup-jfrog-cli@v4
         with:
-          oidc-provider-name: ashritha-cli
-          oidc-audience: ashritha-cli-Audience
+          oidc-provider-name: ashritha-cli       # Must match Artifactory OIDC config
+          oidc-audience: ashritha-cli-Audience   # Must match Artifactory OIDC config
         env:
           JF_URL: https://hts2.jfrog.io/artifactory/
+          JFROG_CLI_AVOID_NEW_VERSION_WARNING: "TRUE"
 
       - name: Ping Artifactory
         run: |
